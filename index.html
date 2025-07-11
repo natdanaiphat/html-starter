@@ -1,643 +1,927 @@
 <!DOCTYPE html>
 <html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Canvas Grid System</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background: #f0f0f0;
-            overflow: hidden;
-        }
-        
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        background: #f0f0f0;
+        overflow: hidden;
+        /* Prevent touch scrolling */
+        touch-action: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      .toolbar {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: white;
+        border-radius: 8px;
+        padding: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        /* Mobile responsive */
+        max-width: calc(100vw - 240px);
+        font-size: 14px;
+      }
+
+      @media (max-width: 768px) {
         .toolbar {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: white;
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            z-index: 1000;
+          position: fixed;
+          bottom: 10px;
+          left: 10px;
+          right: 10px;
+          top: auto;
+          max-width: none;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 5px;
+          padding: 15px;
         }
-        
+      }
+
+      .toolbar button {
+        margin: 2px;
+        padding: 12px 16px;
+        border: 1px solid #ddd;
+        background: white;
+        cursor: pointer;
+        border-radius: 4px;
+        /* Better touch targets */
+        min-height: 44px;
+        min-width: 44px;
+        font-size: 14px;
+      }
+
+      @media (max-width: 768px) {
         .toolbar button {
-            margin: 2px;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            background: white;
-            cursor: pointer;
-            border-radius: 4px;
+          flex: 1;
+          min-width: 80px;
+          padding: 15px 8px;
+          font-size: 12px;
         }
-        
-        .toolbar button:hover {
-            background: #f5f5f5;
-        }
-        
-        .toolbar button.active {
-            background: #007bff;
-            color: white;
-        }
-        
+      }
+
+      .toolbar button:hover {
+        background: #f5f5f5;
+      }
+
+      .toolbar button.active {
+        background: #007bff;
+        color: white;
+      }
+
+      .layer-panel {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: white;
+        border-radius: 8px;
+        padding: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        width: 200px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      @media (max-width: 768px) {
         .layer-panel {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: white;
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            z-index: 1000;
-            width: 200px;
+          position: fixed;
+          top: 10px;
+          right: 10px;
+          width: 180px;
+          max-height: 250px;
+          font-size: 12px;
         }
-        
-        .layer-item {
-            display: flex;
-            align-items: center;
-            padding: 5px;
-            margin: 2px 0;
-            background: #f9f9f9;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
-        .layer-item:hover {
-            background: #e9e9e9;
-        }
-        
-        .layer-item.active {
-            background: #007bff;
-            color: white;
-        }
-        
-        .layer-controls {
-            display: flex;
-            gap: 5px;
-            margin-left: auto;
-        }
-        
-        .layer-controls button {
-            padding: 2px 6px;
-            border: none;
-            background: rgba(0,0,0,0.1);
-            cursor: pointer;
-            border-radius: 3px;
-            font-size: 12px;
-        }
-        
-        #canvas-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            cursor: grab;
-        }
-        
-        #canvas-container:active {
-            cursor: grabbing;
-        }
-        
-        canvas {
-            display: block;
-            position: absolute;
-        }
-        
-        .grid-controls {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #eee;
-        }
-        
-        .grid-controls label {
-            display: block;
-            margin: 5px 0;
-            font-size: 12px;
-        }
-        
-        .grid-controls input {
-            width: 60px;
-            padding: 2px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-        }
-        
-        .status-bar {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 30px;
-            background: white;
-            border-top: 1px solid #ddd;
-            display: flex;
-            align-items: center;
-            padding: 0 10px;
-            font-size: 12px;
-            color: #666;
-        }
+      }
+
+      .layer-item {
+        display: flex;
+        align-items: center;
+        padding: 5px;
+        margin: 2px 0;
+        background: #f9f9f9;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .layer-item:hover {
+        background: #e9e9e9;
+      }
+
+      .layer-item.active {
+        background: #007bff;
+        color: white;
+      }
+
+      .layer-controls {
+        display: flex;
+        gap: 5px;
+        margin-left: auto;
+      }
+
+      .layer-controls button {
+        padding: 2px 6px;
+        border: none;
+        background: rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        border-radius: 3px;
+        font-size: 12px;
+      }
+
+      #canvas-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        cursor: grab;
+        /* Prevent touch behaviors */
+        touch-action: none;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+      }
+
+      #canvas-container:active {
+        cursor: grabbing;
+      }
+
+      canvas {
+        display: block;
+        position: absolute;
+        /* Prevent touch behaviors */
+        touch-action: none;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+      }
+
+      .grid-controls {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #eee;
+      }
+
+      .grid-controls label {
+        display: block;
+        margin: 5px 0;
+        font-size: 12px;
+      }
+
+      .grid-controls input {
+        width: 60px;
+        padding: 2px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+      }
+
+      .status-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 30px;
+        background: white;
+        border-top: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        font-size: 12px;
+        color: #666;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="toolbar">
-        <button id="pan-btn" class="active">Pan</button>
-        <button id="select-btn">Select</button>
-        <button id="rect-btn">Rectangle</button>
-        <button id="circle-btn">Circle</button>
-        <button id="line-btn">Line</button>
-        <hr>
-        <button id="grid-toggle">Grid: ON</button>
-        <button id="snap-toggle">Snap: ON</button>
-        <div class="grid-controls">
-            <label>Grid Size: <input type="number" id="grid-size" value="20" min="5" max="100"></label>
-            <label>Zoom: <input type="range" id="zoom-slider" min="0.1" max="3" step="0.1" value="1"></label>
-        </div>
+      <button id="pan-btn" class="active">Pan</button>
+      <button id="select-btn">Select</button>
+      <button id="rect-btn">Rectangle</button>
+      <button id="circle-btn">Circle</button>
+      <button id="line-btn">Line</button>
+      <hr />
+      <button id="grid-toggle">Grid: ON</button>
+      <button id="snap-toggle">Snap: ON</button>
+      <div class="grid-controls">
+        <label
+          >Grid Size:
+          <input type="number" id="grid-size" value="20" min="5" max="100"
+        /></label>
+        <label
+          >Zoom:
+          <input
+            type="range"
+            id="zoom-slider"
+            min="0.1"
+            max="3"
+            step="0.1"
+            value="1"
+        /></label>
+      </div>
     </div>
-    
+
     <div class="layer-panel">
-        <h4 style="margin: 0 0 10px 0;">Layers</h4>
-        <div id="layers-list"></div>
-        <button id="add-layer">+ New Layer</button>
+      <h4 style="margin: 0 0 10px 0">Layers</h4>
+      <div id="layers-list"></div>
+      <button id="add-layer">+ New Layer</button>
     </div>
-    
+
     <div id="canvas-container">
-        <canvas id="main-canvas"></canvas>
+      <canvas id="main-canvas"></canvas>
     </div>
-    
+
     <div class="status-bar">
-        <span id="mouse-pos">Mouse: (0, 0)</span>
-        <span style="margin-left: 20px;" id="zoom-info">Zoom: 100%</span>
-        <span style="margin-left: 20px;" id="grid-info">Grid: 20px</span>
+      <span id="mouse-pos">Mouse: (0, 0)</span>
+      <span style="margin-left: 20px" id="zoom-info">Zoom: 100%</span>
+      <span style="margin-left: 20px" id="grid-info">Grid: 20px</span>
     </div>
 
     <script>
-        class CanvasGridSystem {
-            constructor() {
-                this.canvas = document.getElementById('main-canvas');
-                this.ctx = this.canvas.getContext('2d');
-                this.container = document.getElementById('canvas-container');
-                
-                // Canvas state
-                this.zoom = 1;
-                this.panX = 0;
-                this.panY = 0;
-                this.gridSize = 20;
-                this.showGrid = true;
-                this.snapToGrid = true;
-                
-                // Interaction state
-                this.isPanning = false;
-                this.lastMouseX = 0;
-                this.lastMouseY = 0;
-                this.currentTool = 'pan';
-                this.isDrawing = false;
-                this.startX = 0;
-                this.startY = 0;
-                
-                // Layer system
-                this.layers = [
-                    { id: 1, name: 'Background', visible: true, objects: [] },
-                    { id: 2, name: 'Layer 1', visible: true, objects: [] }
-                ];
-                this.currentLayer = 1;
-                this.nextLayerId = 3;
-                
-                // Objects
-                this.objects = [];
-                this.selectedObject = null;
-                
-                this.setupCanvas();
-                this.setupEventListeners();
-                this.updateLayerPanel();
-                this.render();
+      class CanvasGridSystem {
+        constructor() {
+          this.canvas = document.getElementById("main-canvas");
+          this.ctx = this.canvas.getContext("2d");
+          this.container = document.getElementById("canvas-container");
+
+          // Canvas state
+          this.zoom = 1;
+          this.panX = 0;
+          this.panY = 0;
+          this.gridSize = 20;
+          this.showGrid = true;
+          this.snapToGrid = true;
+
+          // Interaction state
+          this.isPanning = false;
+          this.lastMouseX = 0;
+          this.lastMouseY = 0;
+          this.currentTool = "pan";
+          this.isDrawing = false;
+          this.startX = 0;
+          this.startY = 0;
+
+          // Touch state
+          this.touches = [];
+          this.lastTouchDistance = 0;
+          this.isMultiTouch = false;
+
+          // Layer system
+          this.layers = [
+            { id: 1, name: "Background", visible: true, objects: [] },
+            { id: 2, name: "Layer 1", visible: true, objects: [] },
+          ];
+          this.currentLayer = 1;
+          this.nextLayerId = 3;
+
+          // Objects
+          this.objects = [];
+          this.selectedObject = null;
+
+          this.setupCanvas();
+          this.setupEventListeners();
+          this.updateLayerPanel();
+          this.render();
+        }
+
+        setupCanvas() {
+          this.resizeCanvas();
+          window.addEventListener("resize", () => this.resizeCanvas());
+        }
+
+        resizeCanvas() {
+          this.canvas.width = window.innerWidth;
+          this.canvas.height = window.innerHeight;
+          this.render();
+        }
+
+        setupEventListeners() {
+          // Mouse events
+          this.canvas.addEventListener("mousedown", (e) =>
+            this.onPointerDown(e)
+          );
+          this.canvas.addEventListener("mousemove", (e) =>
+            this.onPointerMove(e)
+          );
+          this.canvas.addEventListener("mouseup", (e) => this.onPointerUp(e));
+          this.canvas.addEventListener("wheel", (e) => this.onWheel(e));
+
+          // Touch events for mobile
+          this.canvas.addEventListener("touchstart", (e) =>
+            this.onTouchStart(e)
+          );
+          this.canvas.addEventListener("touchmove", (e) => this.onTouchMove(e));
+          this.canvas.addEventListener("touchend", (e) => this.onTouchEnd(e));
+
+          // Prevent default touch behaviors
+          this.canvas.addEventListener("touchstart", (e) => e.preventDefault());
+          this.canvas.addEventListener("touchmove", (e) => e.preventDefault());
+          this.canvas.addEventListener("touchend", (e) => e.preventDefault());
+
+          // Tool buttons
+          document
+            .getElementById("pan-btn")
+            .addEventListener("click", () => this.setTool("pan"));
+          document
+            .getElementById("select-btn")
+            .addEventListener("click", () => this.setTool("select"));
+          document
+            .getElementById("rect-btn")
+            .addEventListener("click", () => this.setTool("rect"));
+          document
+            .getElementById("circle-btn")
+            .addEventListener("click", () => this.setTool("circle"));
+          document
+            .getElementById("line-btn")
+            .addEventListener("click", () => this.setTool("line"));
+
+          // Grid and snap controls
+          document
+            .getElementById("grid-toggle")
+            .addEventListener("click", () => this.toggleGrid());
+          document
+            .getElementById("snap-toggle")
+            .addEventListener("click", () => this.toggleSnap());
+          document
+            .getElementById("grid-size")
+            .addEventListener("input", (e) => {
+              this.gridSize = parseInt(e.target.value);
+              this.render();
+              this.updateStatusBar();
+            });
+
+          // Zoom slider
+          document
+            .getElementById("zoom-slider")
+            .addEventListener("input", (e) => {
+              this.zoom = parseFloat(e.target.value);
+              this.render();
+              this.updateStatusBar();
+            });
+
+          // Layer management
+          document
+            .getElementById("add-layer")
+            .addEventListener("click", () => this.addLayer());
+
+          // Keyboard shortcuts
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "g") this.toggleGrid();
+            if (e.key === "s") this.toggleSnap();
+            if (e.key === "Delete" && this.selectedObject)
+              this.deleteSelectedObject();
+          });
+        }
+
+        setTool(tool) {
+          this.currentTool = tool;
+          document
+            .querySelectorAll(".toolbar button")
+            .forEach((btn) => btn.classList.remove("active"));
+          document.getElementById(tool + "-btn").classList.add("active");
+        }
+
+        toggleGrid() {
+          this.showGrid = !this.showGrid;
+          document.getElementById("grid-toggle").textContent = `Grid: ${
+            this.showGrid ? "ON" : "OFF"
+          }`;
+          this.render();
+        }
+
+        toggleSnap() {
+          this.snapToGrid = !this.snapToGrid;
+          document.getElementById("snap-toggle").textContent = `Snap: ${
+            this.snapToGrid ? "ON" : "OFF"
+          }`;
+        }
+
+        screenToCanvas(x, y) {
+          return {
+            x: (x - this.panX) / this.zoom,
+            y: (y - this.panY) / this.zoom,
+          };
+        }
+
+        canvasToScreen(x, y) {
+          return {
+            x: x * this.zoom + this.panX,
+            y: y * this.zoom + this.panY,
+          };
+        }
+
+        snapToGridPoint(x, y) {
+          if (!this.snapToGrid) return { x, y };
+
+          const gridX = Math.round(x / this.gridSize) * this.gridSize;
+          const gridY = Math.round(y / this.gridSize) * this.gridSize;
+          return { x: gridX, y: gridY };
+        }
+
+        getPointerPosition(e) {
+          const rect = this.canvas.getBoundingClientRect();
+          if (e.touches) {
+            // Touch event
+            return {
+              x: e.touches[0].clientX - rect.left,
+              y: e.touches[0].clientY - rect.top,
+            };
+          } else {
+            // Mouse event
+            return {
+              x: e.clientX - rect.left,
+              y: e.clientY - rect.top,
+            };
+          }
+        }
+
+        // Unified pointer events (works for both mouse and touch)
+        onPointerDown(e) {
+          const pos = this.getPointerPosition(e);
+          this.lastMouseX = pos.x;
+          this.lastMouseY = pos.y;
+
+          if (this.currentTool === "pan") {
+            this.isPanning = true;
+            this.canvas.style.cursor = "grabbing";
+          } else if (this.currentTool !== "select") {
+            this.isDrawing = true;
+            const canvasPos = this.screenToCanvas(pos.x, pos.y);
+            const snappedPos = this.snapToGridPoint(canvasPos.x, canvasPos.y);
+            this.startX = snappedPos.x;
+            this.startY = snappedPos.y;
+          }
+        }
+
+        onPointerMove(e) {
+          const pos = this.getPointerPosition(e);
+
+          // Update mouse position in status bar
+          const canvasPos = this.screenToCanvas(pos.x, pos.y);
+          document.getElementById(
+            "mouse-pos"
+          ).textContent = `Mouse: (${Math.round(canvasPos.x)}, ${Math.round(
+            canvasPos.y
+          )})`;
+
+          if (this.isPanning) {
+            const deltaX = pos.x - this.lastMouseX;
+            const deltaY = pos.y - this.lastMouseY;
+            this.panX += deltaX;
+            this.panY += deltaY;
+            this.render();
+          } else if (this.isDrawing) {
+            this.render();
+            this.drawPreview(pos.x, pos.y);
+          }
+
+          this.lastMouseX = pos.x;
+          this.lastMouseY = pos.y;
+        }
+
+        onPointerUp(e) {
+          if (this.isPanning) {
+            this.isPanning = false;
+            this.canvas.style.cursor = "grab";
+          } else if (this.isDrawing) {
+            this.finishDrawing(e);
+            this.isDrawing = false;
+          }
+        }
+
+        // Touch-specific events
+        onTouchStart(e) {
+          e.preventDefault();
+          const touches = Array.from(e.touches);
+          this.touches = touches;
+
+          if (touches.length === 1) {
+            // Single touch - treat as pointer down
+            this.onPointerDown(e);
+          } else if (touches.length === 2) {
+            // Two fingers - prepare for pinch zoom
+            this.isMultiTouch = true;
+            this.isPanning = false;
+            this.isDrawing = false;
+
+            const touch1 = touches[0];
+            const touch2 = touches[1];
+            this.lastTouchDistance = Math.sqrt(
+              Math.pow(touch2.clientX - touch1.clientX, 2) +
+                Math.pow(touch2.clientY - touch1.clientY, 2)
+            );
+          }
+        }
+
+        onTouchMove(e) {
+          e.preventDefault();
+          const touches = Array.from(e.touches);
+
+          if (touches.length === 1 && !this.isMultiTouch) {
+            // Single touch - treat as pointer move
+            this.onPointerMove(e);
+          } else if (touches.length === 2) {
+            // Two fingers - pinch zoom
+            const touch1 = touches[0];
+            const touch2 = touches[1];
+            const currentDistance = Math.sqrt(
+              Math.pow(touch2.clientX - touch1.clientX, 2) +
+                Math.pow(touch2.clientY - touch1.clientY, 2)
+            );
+
+            if (this.lastTouchDistance > 0) {
+              const rect = this.canvas.getBoundingClientRect();
+              const centerX = (touch1.clientX + touch2.clientX) / 2 - rect.left;
+              const centerY = (touch1.clientY + touch2.clientY) / 2 - rect.top;
+
+              const scaleFactor = currentDistance / this.lastTouchDistance;
+              const newZoom = Math.max(
+                0.1,
+                Math.min(3, this.zoom * scaleFactor)
+              );
+
+              // Zoom towards touch center
+              const canvasPos = this.screenToCanvas(centerX, centerY);
+              this.zoom = newZoom;
+              const newScreenPos = this.canvasToScreen(
+                canvasPos.x,
+                canvasPos.y
+              );
+
+              this.panX += centerX - newScreenPos.x;
+              this.panY += centerY - newScreenPos.y;
+
+              document.getElementById("zoom-slider").value = this.zoom;
+              this.render();
+              this.updateStatusBar();
             }
-            
-            setupCanvas() {
-                this.resizeCanvas();
-                window.addEventListener('resize', () => this.resizeCanvas());
+
+            this.lastTouchDistance = currentDistance;
+          }
+        }
+
+        onTouchEnd(e) {
+          e.preventDefault();
+          const touches = Array.from(e.touches);
+
+          if (touches.length === 0) {
+            // All touches ended
+            this.isMultiTouch = false;
+            this.lastTouchDistance = 0;
+            this.onPointerUp(e);
+          } else if (touches.length === 1 && this.isMultiTouch) {
+            // Went from multi-touch to single touch
+            this.isMultiTouch = false;
+            this.lastTouchDistance = 0;
+          }
+
+          this.touches = touches;
+        }
+
+        onMouseDown(e) {
+          this.onPointerDown(e);
+        }
+
+        onMouseMove(e) {
+          this.onPointerMove(e);
+        }
+
+        onMouseUp(e) {
+          this.onPointerUp(e);
+        }
+
+        onWheel(e) {
+          e.preventDefault();
+          const rect = this.canvas.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+
+          const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
+          const newZoom = Math.max(0.1, Math.min(3, this.zoom * scaleFactor));
+
+          // Zoom towards mouse position
+          const canvasPos = this.screenToCanvas(mouseX, mouseY);
+          this.zoom = newZoom;
+          const newScreenPos = this.canvasToScreen(canvasPos.x, canvasPos.y);
+
+          this.panX += mouseX - newScreenPos.x;
+          this.panY += mouseY - newScreenPos.y;
+
+          document.getElementById("zoom-slider").value = this.zoom;
+          this.render();
+          this.updateStatusBar();
+        }
+
+        drawPreview(x, y) {
+          const canvasPos = this.screenToCanvas(x, y);
+          const snappedPos = this.snapToGridPoint(canvasPos.x, canvasPos.y);
+
+          this.ctx.save();
+          this.ctx.setTransform(
+            this.zoom,
+            0,
+            0,
+            this.zoom,
+            this.panX,
+            this.panY
+          );
+          this.ctx.strokeStyle = "#007bff";
+          this.ctx.lineWidth = 2 / this.zoom;
+          this.ctx.setLineDash([5 / this.zoom, 5 / this.zoom]);
+
+          this.ctx.beginPath();
+          if (this.currentTool === "rect") {
+            this.ctx.rect(
+              this.startX,
+              this.startY,
+              snappedPos.x - this.startX,
+              snappedPos.y - this.startY
+            );
+          } else if (this.currentTool === "circle") {
+            const radius = Math.sqrt(
+              Math.pow(snappedPos.x - this.startX, 2) +
+                Math.pow(snappedPos.y - this.startY, 2)
+            );
+            this.ctx.arc(this.startX, this.startY, radius, 0, 2 * Math.PI);
+          } else if (this.currentTool === "line") {
+            this.ctx.moveTo(this.startX, this.startY);
+            this.ctx.lineTo(snappedPos.x, snappedPos.y);
+          }
+          this.ctx.stroke();
+          this.ctx.restore();
+        }
+
+        finishDrawing(e) {
+          const pos = this.getPointerPosition(e);
+          const canvasPos = this.screenToCanvas(pos.x, pos.y);
+          const snappedPos = this.snapToGridPoint(canvasPos.x, canvasPos.y);
+
+          let object = null;
+          if (this.currentTool === "rect") {
+            object = {
+              type: "rect",
+              x: this.startX,
+              y: this.startY,
+              width: snappedPos.x - this.startX,
+              height: snappedPos.y - this.startY,
+              layer: this.currentLayer,
+            };
+          } else if (this.currentTool === "circle") {
+            const radius = Math.sqrt(
+              Math.pow(snappedPos.x - this.startX, 2) +
+                Math.pow(snappedPos.y - this.startY, 2)
+            );
+            object = {
+              type: "circle",
+              x: this.startX,
+              y: this.startY,
+              radius: radius,
+              layer: this.currentLayer,
+            };
+          } else if (this.currentTool === "line") {
+            object = {
+              type: "line",
+              x1: this.startX,
+              y1: this.startY,
+              x2: snappedPos.x,
+              y2: snappedPos.y,
+              layer: this.currentLayer,
+            };
+          }
+
+          if (object) {
+            this.objects.push(object);
+            const layer = this.layers.find((l) => l.id === this.currentLayer);
+            if (layer) layer.objects.push(object);
+          }
+
+          this.render();
+        }
+
+        drawGrid() {
+          if (!this.showGrid) return;
+
+          this.ctx.save();
+          this.ctx.setTransform(
+            this.zoom,
+            0,
+            0,
+            this.zoom,
+            this.panX,
+            this.panY
+          );
+
+          const gridSize = this.gridSize;
+          const canvasWidth = this.canvas.width / this.zoom;
+          const canvasHeight = this.canvas.height / this.zoom;
+          const offsetX = -this.panX / this.zoom;
+          const offsetY = -this.panY / this.zoom;
+
+          // Calculate grid bounds
+          const startX = Math.floor(offsetX / gridSize) * gridSize;
+          const startY = Math.floor(offsetY / gridSize) * gridSize;
+          const endX = offsetX + canvasWidth;
+          const endY = offsetY + canvasHeight;
+
+          this.ctx.strokeStyle = "#e0e0e0";
+          this.ctx.lineWidth = 1 / this.zoom;
+          this.ctx.beginPath();
+
+          // Vertical lines
+          for (let x = startX; x <= endX; x += gridSize) {
+            this.ctx.moveTo(x, offsetY);
+            this.ctx.lineTo(x, endY);
+          }
+
+          // Horizontal lines
+          for (let y = startY; y <= endY; y += gridSize) {
+            this.ctx.moveTo(offsetX, y);
+            this.ctx.lineTo(endX, y);
+          }
+
+          this.ctx.stroke();
+          this.ctx.restore();
+        }
+
+        drawObjects() {
+          const sortedObjects = [...this.objects].sort(
+            (a, b) => a.layer - b.layer
+          );
+
+          this.ctx.save();
+          this.ctx.setTransform(
+            this.zoom,
+            0,
+            0,
+            this.zoom,
+            this.panX,
+            this.panY
+          );
+
+          for (const obj of sortedObjects) {
+            const layer = this.layers.find((l) => l.id === obj.layer);
+            if (!layer || !layer.visible) continue;
+
+            this.ctx.strokeStyle =
+              obj === this.selectedObject ? "#ff6b6b" : "#333";
+            this.ctx.fillStyle = "rgba(100, 150, 255, 0.3)";
+            this.ctx.lineWidth = 2 / this.zoom;
+
+            this.ctx.beginPath();
+            if (obj.type === "rect") {
+              this.ctx.rect(obj.x, obj.y, obj.width, obj.height);
+              this.ctx.fill();
+              this.ctx.stroke();
+            } else if (obj.type === "circle") {
+              this.ctx.arc(obj.x, obj.y, obj.radius, 0, 2 * Math.PI);
+              this.ctx.fill();
+              this.ctx.stroke();
+            } else if (obj.type === "line") {
+              this.ctx.moveTo(obj.x1, obj.y1);
+              this.ctx.lineTo(obj.x2, obj.y2);
+              this.ctx.stroke();
             }
-            
-            resizeCanvas() {
-                this.canvas.width = window.innerWidth;
-                this.canvas.height = window.innerHeight;
-                this.render();
-            }
-            
-            setupEventListeners() {
-                // Mouse events
-                this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
-                this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
-                this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
-                this.canvas.addEventListener('wheel', (e) => this.onWheel(e));
-                
-                // Tool buttons
-                document.getElementById('pan-btn').addEventListener('click', () => this.setTool('pan'));
-                document.getElementById('select-btn').addEventListener('click', () => this.setTool('select'));
-                document.getElementById('rect-btn').addEventListener('click', () => this.setTool('rect'));
-                document.getElementById('circle-btn').addEventListener('click', () => this.setTool('circle'));
-                document.getElementById('line-btn').addEventListener('click', () => this.setTool('line'));
-                
-                // Grid and snap controls
-                document.getElementById('grid-toggle').addEventListener('click', () => this.toggleGrid());
-                document.getElementById('snap-toggle').addEventListener('click', () => this.toggleSnap());
-                document.getElementById('grid-size').addEventListener('input', (e) => {
-                    this.gridSize = parseInt(e.target.value);
-                    this.render();
-                    this.updateStatusBar();
-                });
-                
-                // Zoom slider
-                document.getElementById('zoom-slider').addEventListener('input', (e) => {
-                    this.zoom = parseFloat(e.target.value);
-                    this.render();
-                    this.updateStatusBar();
-                });
-                
-                // Layer management
-                document.getElementById('add-layer').addEventListener('click', () => this.addLayer());
-                
-                // Keyboard shortcuts
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'g') this.toggleGrid();
-                    if (e.key === 's') this.toggleSnap();
-                    if (e.key === 'Delete' && this.selectedObject) this.deleteSelectedObject();
-                });
-            }
-            
-            setTool(tool) {
-                this.currentTool = tool;
-                document.querySelectorAll('.toolbar button').forEach(btn => btn.classList.remove('active'));
-                document.getElementById(tool + '-btn').classList.add('active');
-            }
-            
-            toggleGrid() {
-                this.showGrid = !this.showGrid;
-                document.getElementById('grid-toggle').textContent = `Grid: ${this.showGrid ? 'ON' : 'OFF'}`;
-                this.render();
-            }
-            
-            toggleSnap() {
-                this.snapToGrid = !this.snapToGrid;
-                document.getElementById('snap-toggle').textContent = `Snap: ${this.snapToGrid ? 'ON' : 'OFF'}`;
-            }
-            
-            screenToCanvas(x, y) {
-                return {
-                    x: (x - this.panX) / this.zoom,
-                    y: (y - this.panY) / this.zoom
-                };
-            }
-            
-            canvasToScreen(x, y) {
-                return {
-                    x: x * this.zoom + this.panX,
-                    y: y * this.zoom + this.panY
-                };
-            }
-            
-            snapToGridPoint(x, y) {
-                if (!this.snapToGrid) return { x, y };
-                
-                const gridX = Math.round(x / this.gridSize) * this.gridSize;
-                const gridY = Math.round(y / this.gridSize) * this.gridSize;
-                return { x: gridX, y: gridY };
-            }
-            
-            onMouseDown(e) {
-                const rect = this.canvas.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-                
-                this.lastMouseX = mouseX;
-                this.lastMouseY = mouseY;
-                
-                if (this.currentTool === 'pan') {
-                    this.isPanning = true;
-                    this.canvas.style.cursor = 'grabbing';
-                } else if (this.currentTool !== 'select') {
-                    this.isDrawing = true;
-                    const canvasPos = this.screenToCanvas(mouseX, mouseY);
-                    const snappedPos = this.snapToGridPoint(canvasPos.x, canvasPos.y);
-                    this.startX = snappedPos.x;
-                    this.startY = snappedPos.y;
-                }
-            }
-            
-            onMouseMove(e) {
-                const rect = this.canvas.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-                
-                // Update mouse position in status bar
-                const canvasPos = this.screenToCanvas(mouseX, mouseY);
-                document.getElementById('mouse-pos').textContent = 
-                    `Mouse: (${Math.round(canvasPos.x)}, ${Math.round(canvasPos.y)})`;
-                
-                if (this.isPanning) {
-                    const deltaX = mouseX - this.lastMouseX;
-                    const deltaY = mouseY - this.lastMouseY;
-                    this.panX += deltaX;
-                    this.panY += deltaY;
-                    this.render();
-                } else if (this.isDrawing) {
-                    this.render();
-                    this.drawPreview(mouseX, mouseY);
-                }
-                
-                this.lastMouseX = mouseX;
-                this.lastMouseY = mouseY;
-            }
-            
-            onMouseUp(e) {
-                if (this.isPanning) {
-                    this.isPanning = false;
-                    this.canvas.style.cursor = 'grab';
-                } else if (this.isDrawing) {
-                    this.finishDrawing(e);
-                    this.isDrawing = false;
-                }
-            }
-            
-            onWheel(e) {
-                e.preventDefault();
-                const rect = this.canvas.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-                
-                const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
-                const newZoom = Math.max(0.1, Math.min(3, this.zoom * scaleFactor));
-                
-                // Zoom towards mouse position
-                const canvasPos = this.screenToCanvas(mouseX, mouseY);
-                this.zoom = newZoom;
-                const newScreenPos = this.canvasToScreen(canvasPos.x, canvasPos.y);
-                
-                this.panX += mouseX - newScreenPos.x;
-                this.panY += mouseY - newScreenPos.y;
-                
-                document.getElementById('zoom-slider').value = this.zoom;
-                this.render();
-                this.updateStatusBar();
-            }
-            
-            drawPreview(mouseX, mouseY) {
-                const canvasPos = this.screenToCanvas(mouseX, mouseY);
-                const snappedPos = this.snapToGridPoint(canvasPos.x, canvasPos.y);
-                
-                this.ctx.save();
-                this.ctx.setTransform(this.zoom, 0, 0, this.zoom, this.panX, this.panY);
-                this.ctx.strokeStyle = '#007bff';
-                this.ctx.lineWidth = 2 / this.zoom;
-                this.ctx.setLineDash([5 / this.zoom, 5 / this.zoom]);
-                
-                this.ctx.beginPath();
-                if (this.currentTool === 'rect') {
-                    this.ctx.rect(this.startX, this.startY, 
-                                 snappedPos.x - this.startX, snappedPos.y - this.startY);
-                } else if (this.currentTool === 'circle') {
-                    const radius = Math.sqrt(
-                        Math.pow(snappedPos.x - this.startX, 2) + 
-                        Math.pow(snappedPos.y - this.startY, 2)
-                    );
-                    this.ctx.arc(this.startX, this.startY, radius, 0, 2 * Math.PI);
-                } else if (this.currentTool === 'line') {
-                    this.ctx.moveTo(this.startX, this.startY);
-                    this.ctx.lineTo(snappedPos.x, snappedPos.y);
-                }
-                this.ctx.stroke();
-                this.ctx.restore();
-            }
-            
-            finishDrawing(e) {
-                const rect = this.canvas.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-                const canvasPos = this.screenToCanvas(mouseX, mouseY);
-                const snappedPos = this.snapToGridPoint(canvasPos.x, canvasPos.y);
-                
-                let object = null;
-                if (this.currentTool === 'rect') {
-                    object = {
-                        type: 'rect',
-                        x: this.startX,
-                        y: this.startY,
-                        width: snappedPos.x - this.startX,
-                        height: snappedPos.y - this.startY,
-                        layer: this.currentLayer
-                    };
-                } else if (this.currentTool === 'circle') {
-                    const radius = Math.sqrt(
-                        Math.pow(snappedPos.x - this.startX, 2) + 
-                        Math.pow(snappedPos.y - this.startY, 2)
-                    );
-                    object = {
-                        type: 'circle',
-                        x: this.startX,
-                        y: this.startY,
-                        radius: radius,
-                        layer: this.currentLayer
-                    };
-                } else if (this.currentTool === 'line') {
-                    object = {
-                        type: 'line',
-                        x1: this.startX,
-                        y1: this.startY,
-                        x2: snappedPos.x,
-                        y2: snappedPos.y,
-                        layer: this.currentLayer
-                    };
-                }
-                
-                if (object) {
-                    this.objects.push(object);
-                    const layer = this.layers.find(l => l.id === this.currentLayer);
-                    if (layer) layer.objects.push(object);
-                }
-                
-                this.render();
-            }
-            
-            drawGrid() {
-                if (!this.showGrid) return;
-                
-                this.ctx.save();
-                this.ctx.setTransform(this.zoom, 0, 0, this.zoom, this.panX, this.panY);
-                
-                const gridSize = this.gridSize;
-                const canvasWidth = this.canvas.width / this.zoom;
-                const canvasHeight = this.canvas.height / this.zoom;
-                const offsetX = -this.panX / this.zoom;
-                const offsetY = -this.panY / this.zoom;
-                
-                // Calculate grid bounds
-                const startX = Math.floor(offsetX / gridSize) * gridSize;
-                const startY = Math.floor(offsetY / gridSize) * gridSize;
-                const endX = offsetX + canvasWidth;
-                const endY = offsetY + canvasHeight;
-                
-                this.ctx.strokeStyle = '#e0e0e0';
-                this.ctx.lineWidth = 1 / this.zoom;
-                this.ctx.beginPath();
-                
-                // Vertical lines
-                for (let x = startX; x <= endX; x += gridSize) {
-                    this.ctx.moveTo(x, offsetY);
-                    this.ctx.lineTo(x, endY);
-                }
-                
-                // Horizontal lines
-                for (let y = startY; y <= endY; y += gridSize) {
-                    this.ctx.moveTo(offsetX, y);
-                    this.ctx.lineTo(endX, y);
-                }
-                
-                this.ctx.stroke();
-                this.ctx.restore();
-            }
-            
-            drawObjects() {
-                const sortedObjects = [...this.objects].sort((a, b) => a.layer - b.layer);
-                
-                this.ctx.save();
-                this.ctx.setTransform(this.zoom, 0, 0, this.zoom, this.panX, this.panY);
-                
-                for (const obj of sortedObjects) {
-                    const layer = this.layers.find(l => l.id === obj.layer);
-                    if (!layer || !layer.visible) continue;
-                    
-                    this.ctx.strokeStyle = obj === this.selectedObject ? '#ff6b6b' : '#333';
-                    this.ctx.fillStyle = 'rgba(100, 150, 255, 0.3)';
-                    this.ctx.lineWidth = 2 / this.zoom;
-                    
-                    this.ctx.beginPath();
-                    if (obj.type === 'rect') {
-                        this.ctx.rect(obj.x, obj.y, obj.width, obj.height);
-                        this.ctx.fill();
-                        this.ctx.stroke();
-                    } else if (obj.type === 'circle') {
-                        this.ctx.arc(obj.x, obj.y, obj.radius, 0, 2 * Math.PI);
-                        this.ctx.fill();
-                        this.ctx.stroke();
-                    } else if (obj.type === 'line') {
-                        this.ctx.moveTo(obj.x1, obj.y1);
-                        this.ctx.lineTo(obj.x2, obj.y2);
-                        this.ctx.stroke();
-                    }
-                }
-                
-                this.ctx.restore();
-            }
-            
-            render() {
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                this.drawGrid();
-                this.drawObjects();
-            }
-            
-            // Layer Management
-            addLayer() {
-                const newLayer = {
-                    id: this.nextLayerId++,
-                    name: `Layer ${this.nextLayerId - 1}`,
-                    visible: true,
-                    objects: []
-                };
-                this.layers.push(newLayer);
-                this.updateLayerPanel();
-            }
-            
-            deleteLayer(layerId) {
-                if (this.layers.length <= 1) return;
-                
-                this.layers = this.layers.filter(l => l.id !== layerId);
-                this.objects = this.objects.filter(obj => obj.layer !== layerId);
-                
-                if (this.currentLayer === layerId) {
-                    this.currentLayer = this.layers[0].id;
-                }
-                
-                this.updateLayerPanel();
-                this.render();
-            }
-            
-            toggleLayerVisibility(layerId) {
-                const layer = this.layers.find(l => l.id === layerId);
-                if (layer) {
-                    layer.visible = !layer.visible;
-                    this.updateLayerPanel();
-                    this.render();
-                }
-            }
-            
-            moveLayer(layerId, direction) {
-                const index = this.layers.findIndex(l => l.id === layerId);
-                if (index === -1) return;
-                
-                const newIndex = direction === 'up' ? index - 1 : index + 1;
-                if (newIndex < 0 || newIndex >= this.layers.length) return;
-                
-                [this.layers[index], this.layers[newIndex]] = [this.layers[newIndex], this.layers[index]];
-                this.updateLayerPanel();
-                this.render();
-            }
-            
-            updateLayerPanel() {
-                const layersList = document.getElementById('layers-list');
-                layersList.innerHTML = '';
-                
-                this.layers.forEach(layer => {
-                    const layerItem = document.createElement('div');
-                    layerItem.className = `layer-item ${layer.id === this.currentLayer ? 'active' : ''}`;
-                    layerItem.innerHTML = `
+          }
+
+          this.ctx.restore();
+        }
+
+        render() {
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          this.drawGrid();
+          this.drawObjects();
+        }
+
+        // Layer Management
+        addLayer() {
+          const newLayer = {
+            id: this.nextLayerId++,
+            name: `Layer ${this.nextLayerId - 1}`,
+            visible: true,
+            objects: [],
+          };
+          this.layers.push(newLayer);
+          this.updateLayerPanel();
+        }
+
+        deleteLayer(layerId) {
+          if (this.layers.length <= 1) return;
+
+          this.layers = this.layers.filter((l) => l.id !== layerId);
+          this.objects = this.objects.filter((obj) => obj.layer !== layerId);
+
+          if (this.currentLayer === layerId) {
+            this.currentLayer = this.layers[0].id;
+          }
+
+          this.updateLayerPanel();
+          this.render();
+        }
+
+        toggleLayerVisibility(layerId) {
+          const layer = this.layers.find((l) => l.id === layerId);
+          if (layer) {
+            layer.visible = !layer.visible;
+            this.updateLayerPanel();
+            this.render();
+          }
+        }
+
+        moveLayer(layerId, direction) {
+          const index = this.layers.findIndex((l) => l.id === layerId);
+          if (index === -1) return;
+
+          const newIndex = direction === "up" ? index - 1 : index + 1;
+          if (newIndex < 0 || newIndex >= this.layers.length) return;
+
+          [this.layers[index], this.layers[newIndex]] = [
+            this.layers[newIndex],
+            this.layers[index],
+          ];
+          this.updateLayerPanel();
+          this.render();
+        }
+
+        updateLayerPanel() {
+          const layersList = document.getElementById("layers-list");
+          layersList.innerHTML = "";
+
+          this.layers.forEach((layer) => {
+            const layerItem = document.createElement("div");
+            layerItem.className = `layer-item ${
+              layer.id === this.currentLayer ? "active" : ""
+            }`;
+            layerItem.innerHTML = `
                         <span>${layer.name}</span>
                         <div class="layer-controls">
-                            <button onclick="canvasSystem.toggleLayerVisibility(${layer.id})" title="Toggle visibility">
-                                ${layer.visible ? '👁️' : '🙈'}
+                            <button onclick="canvasSystem.toggleLayerVisibility(${
+                              layer.id
+                            })" title="Toggle visibility">
+                                ${layer.visible ? "👁️" : "🙈"}
                             </button>
-                            <button onclick="canvasSystem.moveLayer(${layer.id}, 'up')" title="Move up">↑</button>
-                            <button onclick="canvasSystem.moveLayer(${layer.id}, 'down')" title="Move down">↓</button>
-                            <button onclick="canvasSystem.deleteLayer(${layer.id})" title="Delete layer">🗑️</button>
+                            <button onclick="canvasSystem.moveLayer(${
+                              layer.id
+                            }, 'up')" title="Move up">↑</button>
+                            <button onclick="canvasSystem.moveLayer(${
+                              layer.id
+                            }, 'down')" title="Move down">↓</button>
+                            <button onclick="canvasSystem.deleteLayer(${
+                              layer.id
+                            })" title="Delete layer">🗑️</button>
                         </div>
                     `;
-                    
-                    layerItem.addEventListener('click', (e) => {
-                        if (e.target.tagName !== 'BUTTON') {
-                            this.currentLayer = layer.id;
-                            this.updateLayerPanel();
-                        }
-                    });
-                    
-                    layersList.appendChild(layerItem);
-                });
-            }
-            
-            updateStatusBar() {
-                document.getElementById('zoom-info').textContent = `Zoom: ${Math.round(this.zoom * 100)}%`;
-                document.getElementById('grid-info').textContent = `Grid: ${this.gridSize}px`;
-            }
-            
-            deleteSelectedObject() {
-                if (this.selectedObject) {
-                    this.objects = this.objects.filter(obj => obj !== this.selectedObject);
-                    const layer = this.layers.find(l => l.id === this.selectedObject.layer);
-                    if (layer) {
-                        layer.objects = layer.objects.filter(obj => obj !== this.selectedObject);
-                    }
-                    this.selectedObject = null;
-                    this.render();
-                }
-            }
+
+            layerItem.addEventListener("click", (e) => {
+              if (e.target.tagName !== "BUTTON") {
+                this.currentLayer = layer.id;
+                this.updateLayerPanel();
+              }
+            });
+
+            layersList.appendChild(layerItem);
+          });
         }
-        
-        // Initialize the system
-        const canvasSystem = new CanvasGridSystem();
-        
-        // Make it globally accessible for button callbacks
-        window.canvasSystem = canvasSystem;
+
+        updateStatusBar() {
+          document.getElementById(
+            "zoom-info"
+          ).textContent = `Zoom: ${Math.round(this.zoom * 100)}%`;
+          document.getElementById(
+            "grid-info"
+          ).textContent = `Grid: ${this.gridSize}px`;
+        }
+
+        deleteSelectedObject() {
+          if (this.selectedObject) {
+            this.objects = this.objects.filter(
+              (obj) => obj !== this.selectedObject
+            );
+            const layer = this.layers.find(
+              (l) => l.id === this.selectedObject.layer
+            );
+            if (layer) {
+              layer.objects = layer.objects.filter(
+                (obj) => obj !== this.selectedObject
+              );
+            }
+            this.selectedObject = null;
+            this.render();
+          }
+        }
+      }
+
+      // Initialize the system
+      const canvasSystem = new CanvasGridSystem();
+
+      // Make it globally accessible for button callbacks
+      window.canvasSystem = canvasSystem;
     </script>
-</body>
+  </body>
 </html>
